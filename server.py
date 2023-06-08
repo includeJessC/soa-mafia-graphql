@@ -1,3 +1,4 @@
+import datetime
 import queue
 import threading
 from collections import defaultdict
@@ -5,9 +6,51 @@ from concurrent import futures
 from random import shuffle
 
 import grpc
-
+import psycopg2
+import os
 import protos.my_pb2 as my_pb2
 import protos.my_pb2_grpc as my_pb2_grpc
+
+username = os.environ.get("DB_USER")
+db_name = os.environ.get("DB_NAME")
+us_password = os.environ.get("DB_PASSWORD")
+db_host = os.environ.get("DB_HOST")
+
+
+class DataBaseManagemantSystem:
+    def __init__(self):
+        self.con = psycopg2.connect(
+            database=db_name,
+            user=username,
+            password=us_password,
+            host='postgres',
+        )
+        self.cur = self.con.cursor()
+
+    def __del__(self):
+        self.con.close()
+
+    def check_user_with_the_same_nickname_exists(self, user_id):
+        cur = self.con.cursor()
+        request = f"SELECT id FROM mafia.users_ids WHERE id={user_id}"
+        cur.execute(request)
+        result = cur.fetchone()
+        if result is None:
+            return None
+        return result[0]
+
+    def add_users_nickname(self, nickname, user_id):
+        cur = self.con.cursor()
+        request = f"INSERT INTO mafia.users_ids (id, nickname) VALUES ('{user_id}', '{nickname}')"
+        cur.execute(request)
+        self.con.commit()
+
+    def add_stats(self, user_id, game_name, winner, duration):
+        cur = self.con.cursor()
+        request = f"INSERT INTO mafia.games (id, game_name, winner, duration) VALUES ({user_id}, '{game_name}', {winner}, {duration})"
+        cur.execute(request)
+        self.con.commit()
+
 
 
 class Person:
@@ -22,7 +65,6 @@ class Game:
         shuffle(self.all_roles)
         self.cv = threading.Condition()
         self.notifications = {}
-        self.user_id = 0
         self.id_to_info = defaultdict(Person)
         self.ready_counter = 0
         self.votes = {}
@@ -31,11 +73,14 @@ class Game:
         self.checked_role = None
         self.killed = None
         self.checked = None
+        self.date_start = None
 
 
 class Server(my_pb2_grpc.MafiaServerServicer):
     def __init__(self):
         self.games = defaultdict(Game)
+        self.manager = DataBaseManagemantSystem()
+        self.user_id = 0
 
     def ResultedPersonVote(self, session):
         max_votes = max(self.games[session].votes.values())
@@ -61,16 +106,21 @@ class Server(my_pb2_grpc.MafiaServerServicer):
 
     def SetUserName(self, request, context):
         print("SET USER NAME")
-        self.games[request.session].user_id += 1
-        self.games[request.session].id_to_info[self.games[request.session].user_id].name = request.name
+        if self.manager.check_user_with_the_same_nickname_exists(request.name) is None:
+            self.user_id += 1
+            user_id = self.user_id
+            self.manager.add_users_nickname(request.name, user_id)
+        else:
+            user_id = self.manager.check_user_with_the_same_nickname_exists(request.name)
+        self.games[request.session].id_to_info[user_id].name = request.name
         connected_players = []
         print("SET USER NAME")
         for i in self.games[request.session].notifications:
             self.games[request.session].notifications[i].put((request.name, "CONNECT"))
             connected_players.append(self.games[request.session].id_to_info[i].name)
-        self.games[request.session].notifications[self.games[request.session].user_id] = queue.Queue()
+        self.games[request.session].notifications[user_id] = queue.Queue()
         print(connected_players)
-        return my_pb2.ConnectedPlayers(names=connected_players, id=self.games[request.session].user_id)
+        return my_pb2.ConnectedPlayers(names=connected_players, id=user_id)
 
     def GetNotifications(self, request, context):
         print("SUBSCRIBE")
@@ -104,6 +154,7 @@ class Server(my_pb2_grpc.MafiaServerServicer):
             role = self.games[request.session].all_roles.pop()
             self.games[request.session].id_to_info[request.id].role = role
             self.games[request.session].cv.notify()
+        self.games[request.session].date_start = datetime.datetime.now()
         return my_pb2.ReadyResponse(role=role,
                                     players=[elem.name for elem in self.games[request.session].id_to_info.values()],
                                     ids=self.games[request.session].id_to_info.keys())
@@ -117,6 +168,8 @@ class Server(my_pb2_grpc.MafiaServerServicer):
                 self.games[request.session].cv.wait()
             self.games[request.session].cv.notify_all()
         if self.games[request.session].id_to_info[self.ResultedPersonVote(request.session)].role == "mafia":
+            duration = int((datetime.datetime.now() - self.games[request.session].date_start).total_seconds())
+            self.manager.add_stats(request.id, request.session, self.games[request.session].id_to_info[request.id].role != 'mafia', duration)
             return my_pb2.EndDayResponse(killed=self.ResultedPersonVote(request.session), end_game=True)
         self.games[request.session].id_to_info[self.ResultedPersonVote(request.session)].role = "killed"
         return my_pb2.EndDayResponse(killed=self.ResultedPersonVote(request.session), end_game=False)
@@ -153,6 +206,10 @@ class Server(my_pb2_grpc.MafiaServerServicer):
                 self.games[request.session].cv.wait()
             self.games[request.session].cv.notify_all()
         print('returned mafia')
+        if self.games[request.session].end_game:
+            duration = int((datetime.datetime.now() - self.games[request.session].date_start).total_seconds())
+            for key, elem in self.games[request.session].id_to_info.items():
+                self.manager.add_stats(key, request.session, elem.role == 'mafia', duration)
         return my_pb2.EndNightResponse(killed=self.games[request.session].killed,
                                        checked_role=self.games[request.session].checked_role,
                                        checked=self.games[request.session].checked,

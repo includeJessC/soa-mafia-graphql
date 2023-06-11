@@ -24,3 +24,9 @@ CREATE TABLE IF NOT EXISTS mafia.games  (
     winner BOOLEAN DEFAULT FALSE,
     duration BIGINT DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS mafia.games_comments  (
+    id INTEGER NOT NULL,
+    game_name TEXT NOT NULL,
+    comment TEXT NOT NULL
+);

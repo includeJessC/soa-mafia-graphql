@@ -14,7 +14,7 @@ services:
 
 
     server:
-        image: annabogacheva/server_mafia_new
+        image: annabogacheva/server_mafia_new_one
         container_name: server
         environment:
             POSTGRES_DB: postgres
@@ -76,6 +76,24 @@ services:
             DB_HOST: postgres
         ports:
             - "5050:5050/tcp"
+
+    graphql:
+        image: annabogacheva/server_mafia_graphql
+        restart: on-failure
+        depends_on:
+            - postgres
+            - server
+        environment:
+            POSTGRES_DB: postgres
+            POSTGRES_SERVER: postgres
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            DB_USER: postgres
+            DB_PASSWORD: postgres
+            DB_NAME: postgres
+            DB_HOST: postgres
+        ports:
+            - "9095:9095/tcp"
 
 
 volumes:

@@ -6,6 +6,9 @@ service MafiaServer {
   rpc GetMafiaPlayers (SessionName) returns (ConnectedPlayersOnly) {}
   rpc GetNotifications (NotificationsRequest) returns (stream NotificationsResponse) {}
   rpc Disconnect (DisconnectRequest) returns (Empty) {}
+  rpc GetActiveGames(Empty) returns (SessionsName) {}
+  rpc GetPastGames(Empty) returns (SessionsName) {}
+  rpc GetScoreboard(SessionName) returns (ScoreBoard) {}
   rpc SetReadyStatus (ReadyRequest) returns (ReadyResponse) {}
   rpc KillPlayerVote (KillVoteRequest) returns (Empty) {}
   rpc KillPlayerMafia (KillPlayerMafiaRequest) returns (EndNightResponse) {}
@@ -21,6 +24,22 @@ message SetUserNameRequest {
 
 message SessionName {
   string session = 1;
+}
+
+message Player {
+  int64 id = 1;
+  string name = 2;
+  string role = 3;
+}
+
+message ScoreBoard {
+  bool is_mafia_win = 1;
+  bool is_ended = 2;
+  repeated Player players = 3;
+}
+
+message SessionsName {
+  repeated string sessions = 1;
 }
 
 message ConnectedPlayersOnly {

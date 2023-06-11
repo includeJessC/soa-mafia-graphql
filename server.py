@@ -69,6 +69,8 @@ class Game:
         self.ready_counter = 0
         self.votes = {}
         self.end_game = False
+        self.mafia_won = False
+        self.civilians_won = False
         self.counter_killed_civilians = 0
         self.checked_role = None
         self.killed = None
@@ -136,6 +138,30 @@ class Server(my_pb2_grpc.MafiaServerServicer):
                 break
             yield my_pb2.NotificationsResponse(user_name=first, connected=(second == 'CONNECT'))
 
+    def GetActiveGames(self, request, context):
+        print("get games")
+        result = []
+        for key, value in self.games.values():
+            if not value.end_game:
+                result.append(key)
+        return my_pb2.SessionsName(sessions=result)
+
+    def GetPastGames(self, request, context):
+        print("get games")
+        result = []
+        for key, value in self.games.values():
+            if value.end_game:
+                result.append(key)
+        return my_pb2.SessionsName(sessions=result)
+
+    def GetScoreboard(self, request, context):
+        print("get games")
+        game = self.games[request.session]
+        players = []
+        for key, value in game.id_to_info.values():
+            players.append(my_pb2.Player(id=key, role=value.role, name=value.name))
+        return my_pb2.ScoreBoard(is_mafia_win=game.mafia_won, is_ended=game.end_game, players=players)
+
     def Disconnect(self, request, context):
         self.games[request.session].notifications[request.id].put((None, "DELETED"))
         del self.games[request.session].notifications[request.id]
@@ -170,6 +196,7 @@ class Server(my_pb2_grpc.MafiaServerServicer):
         if self.games[request.session].id_to_info[self.ResultedPersonVote(request.session)].role == "mafia":
             duration = int((datetime.datetime.now() - self.games[request.session].date_start).total_seconds())
             self.manager.add_stats(request.id, request.session, self.games[request.session].id_to_info[request.id].role != 'mafia', duration)
+            self.games[request.session].civilians_won = True
             return my_pb2.EndDayResponse(killed=self.ResultedPersonVote(request.session), end_game=True)
         self.games[request.session].id_to_info[self.ResultedPersonVote(request.session)].role = "killed"
         return my_pb2.EndDayResponse(killed=self.ResultedPersonVote(request.session), end_game=False)
@@ -198,6 +225,7 @@ class Server(my_pb2_grpc.MafiaServerServicer):
             if elem.role == "civilian" or elem.role == "sherif":
                 counter += 1
         if counter <= 1:
+            self.games[request.session].mafia_won = True
             self.games[request.session].end_game = True
         print("killl")
         print(self.games[request.session].ready_counter)

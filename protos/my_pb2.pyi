@@ -1,7 +1,7 @@
 from google.protobuf.internal import containers as _containers
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Iterable as _Iterable, Optional as _Optional
+from typing import ClassVar as _ClassVar, Iterable as _Iterable, Mapping as _Mapping, Optional as _Optional, Union as _Union
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -99,6 +99,16 @@ class NotificationsResponse(_message.Message):
     user_name: str
     def __init__(self, connected: bool = ..., user_name: _Optional[str] = ...) -> None: ...
 
+class Player(_message.Message):
+    __slots__ = ["id", "name", "role"]
+    ID_FIELD_NUMBER: _ClassVar[int]
+    NAME_FIELD_NUMBER: _ClassVar[int]
+    ROLE_FIELD_NUMBER: _ClassVar[int]
+    id: int
+    name: str
+    role: str
+    def __init__(self, id: _Optional[int] = ..., name: _Optional[str] = ..., role: _Optional[str] = ...) -> None: ...
+
 class ReadyRequest(_message.Message):
     __slots__ = ["id", "session"]
     ID_FIELD_NUMBER: _ClassVar[int]
@@ -117,11 +127,27 @@ class ReadyResponse(_message.Message):
     role: str
     def __init__(self, role: _Optional[str] = ..., players: _Optional[_Iterable[str]] = ..., ids: _Optional[_Iterable[int]] = ...) -> None: ...
 
+class ScoreBoard(_message.Message):
+    __slots__ = ["is_ended", "is_mafia_win", "players"]
+    IS_ENDED_FIELD_NUMBER: _ClassVar[int]
+    IS_MAFIA_WIN_FIELD_NUMBER: _ClassVar[int]
+    PLAYERS_FIELD_NUMBER: _ClassVar[int]
+    is_ended: bool
+    is_mafia_win: bool
+    players: _containers.RepeatedCompositeFieldContainer[Player]
+    def __init__(self, is_mafia_win: bool = ..., is_ended: bool = ..., players: _Optional[_Iterable[_Union[Player, _Mapping]]] = ...) -> None: ...
+
 class SessionName(_message.Message):
     __slots__ = ["session"]
     SESSION_FIELD_NUMBER: _ClassVar[int]
     session: str
     def __init__(self, session: _Optional[str] = ...) -> None: ...
+
+class SessionsName(_message.Message):
+    __slots__ = ["sessions"]
+    SESSIONS_FIELD_NUMBER: _ClassVar[int]
+    sessions: _containers.RepeatedScalarFieldContainer[str]
+    def __init__(self, sessions: _Optional[_Iterable[str]] = ...) -> None: ...
 
 class SetUserNameRequest(_message.Message):
     __slots__ = ["name", "session"]

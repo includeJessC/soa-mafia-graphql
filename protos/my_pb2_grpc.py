@@ -39,6 +39,21 @@ class MafiaServerStub(object):
                 request_serializer=my__pb2.DisconnectRequest.SerializeToString,
                 response_deserializer=my__pb2.Empty.FromString,
                 )
+        self.GetActiveGames = channel.unary_unary(
+                '/MafiaServer/GetActiveGames',
+                request_serializer=my__pb2.Empty.SerializeToString,
+                response_deserializer=my__pb2.SessionsName.FromString,
+                )
+        self.GetPastGames = channel.unary_unary(
+                '/MafiaServer/GetPastGames',
+                request_serializer=my__pb2.Empty.SerializeToString,
+                response_deserializer=my__pb2.SessionsName.FromString,
+                )
+        self.GetScoreboard = channel.unary_unary(
+                '/MafiaServer/GetScoreboard',
+                request_serializer=my__pb2.SessionName.SerializeToString,
+                response_deserializer=my__pb2.ScoreBoard.FromString,
+                )
         self.SetReadyStatus = channel.unary_unary(
                 '/MafiaServer/SetReadyStatus',
                 request_serializer=my__pb2.ReadyRequest.SerializeToString,
@@ -99,6 +114,24 @@ class MafiaServerServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def Disconnect(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetActiveGames(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetPastGames(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetScoreboard(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -167,6 +200,21 @@ def add_MafiaServerServicer_to_server(servicer, server):
                     servicer.Disconnect,
                     request_deserializer=my__pb2.DisconnectRequest.FromString,
                     response_serializer=my__pb2.Empty.SerializeToString,
+            ),
+            'GetActiveGames': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetActiveGames,
+                    request_deserializer=my__pb2.Empty.FromString,
+                    response_serializer=my__pb2.SessionsName.SerializeToString,
+            ),
+            'GetPastGames': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetPastGames,
+                    request_deserializer=my__pb2.Empty.FromString,
+                    response_serializer=my__pb2.SessionsName.SerializeToString,
+            ),
+            'GetScoreboard': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetScoreboard,
+                    request_deserializer=my__pb2.SessionName.FromString,
+                    response_serializer=my__pb2.ScoreBoard.SerializeToString,
             ),
             'SetReadyStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.SetReadyStatus,
@@ -290,6 +338,57 @@ class MafiaServer(object):
         return grpc.experimental.unary_unary(request, target, '/MafiaServer/Disconnect',
             my__pb2.DisconnectRequest.SerializeToString,
             my__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetActiveGames(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/MafiaServer/GetActiveGames',
+            my__pb2.Empty.SerializeToString,
+            my__pb2.SessionsName.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetPastGames(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/MafiaServer/GetPastGames',
+            my__pb2.Empty.SerializeToString,
+            my__pb2.SessionsName.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetScoreboard(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/MafiaServer/GetScoreboard',
+            my__pb2.SessionName.SerializeToString,
+            my__pb2.ScoreBoard.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

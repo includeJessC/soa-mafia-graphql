@@ -58,32 +58,37 @@ class Player(ObjectType):
 
 
 class Scoreboard(ObjectType):
+    session_name = String()
     is_ended = Boolean()
     is_mafia_win = Boolean()
     players = List(Player)
 
 
 class Query(ObjectType):
-    current_games = List(Int)
-    past_games = List(Int)
-    scoreboard = Field(Scoreboard, session_name=String())
+    get_current_games = List(String)
+    get_past_games = List(String)
+    get_scoreboard = Field(Scoreboard, session_name=String())
     def resolve_get_current_games(self, info):
         print("Get all games")
         try:
             return stub.GetActiveGames(my_pb2.Empty()).sessions
-        except:
+        except Exception as e:
+            print("Some error happened")
+            print(e)
             return []
 
     def resolve_get_past_games(self, info):
         print("Print games")
         try:
             return stub.GetPastGames(my_pb2.Empty()).sessions
-        except:
+        except Exception as e:
+            print("Some error happened")
+            print(e)
             return []
 
     def resolve_get_scoreboard(self, info, session_name):
         response = stub.GetScoreboard(my_pb2.SessionName(session=session_name))
-        return {"session_name": session_name, "is_ended": response.is_ended, "is_mafia_win": response.is_is_mafia_win,
+        return {"session_name": session_name, "is_ended": response.is_ended, "is_mafia_win": response.is_mafia_win,
                 "players": [{"user_id": elem.id, "name": elem.name, "role": elem.role} for elem in response.players]}
 
 

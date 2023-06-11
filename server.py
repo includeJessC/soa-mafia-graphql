@@ -141,7 +141,7 @@ class Server(my_pb2_grpc.MafiaServerServicer):
     def GetActiveGames(self, request, context):
         print("get games")
         result = []
-        for key, value in self.games.values():
+        for key, value in self.games.items():
             if not value.end_game:
                 result.append(key)
         return my_pb2.SessionsName(sessions=result)
@@ -149,7 +149,7 @@ class Server(my_pb2_grpc.MafiaServerServicer):
     def GetPastGames(self, request, context):
         print("get games")
         result = []
-        for key, value in self.games.values():
+        for key, value in self.games.items():
             if value.end_game:
                 result.append(key)
         return my_pb2.SessionsName(sessions=result)
@@ -158,7 +158,7 @@ class Server(my_pb2_grpc.MafiaServerServicer):
         print("get games")
         game = self.games[request.session]
         players = []
-        for key, value in game.id_to_info.values():
+        for key, value in game.id_to_info.items():
             players.append(my_pb2.Player(id=key, role=value.role, name=value.name))
         return my_pb2.ScoreBoard(is_mafia_win=game.mafia_won, is_ended=game.end_game, players=players)
 
